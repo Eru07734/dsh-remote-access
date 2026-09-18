@@ -1,0 +1,12 @@
+{
+  "name": "dsh-api-attribution",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local DSH plugin: append per-request device attribution (timestamp, method, path, Host authority, User-Agent) for /api calls and GUI entry requests, so messages can be traced to a device after the fact.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  }
+}

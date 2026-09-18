@@ -1,0 +1,12 @@
+{
+  "name": "dsh-lan-url",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local DSH plugin: persist the browser URLs that already carry this process's launch token, because `dsh web` prints that line only once to its own stdout.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  }
+}

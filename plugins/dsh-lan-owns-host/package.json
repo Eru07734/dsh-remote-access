@@ -1,0 +1,12 @@
+{
+  "name": "dsh-lan-owns-host",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local DSH plugin: mark a LAN-reached browser session as owning the Host surface so host-backed settings persist instead of falling back to memory.",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./package.json": "./package.json"
+  }
+}
