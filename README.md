@@ -11,7 +11,7 @@ DSH 是一个 agent 运行时（`dsh web` 会起一个 Web GUI），它默认只
 本仓库现在只做一件事：**把浏览器面（DSH Web GUI）开放给别的设备**。曾经与它同仓的「两台机器的 DSH 互通」（TCP 网桥）已经拆到独立仓库 [dsh-net-bridge](https://github.com/Eru07734/dsh-net-bridge)。
 
 > **本仓库是脱敏副本。** 用户名、IP、主机名、tailnet 名都换成了 `<...>` 占位符，对照表在
-> **§7 安全姿态**。当文档读没问题，**照抄运行不行** —— 每条命令里的占位符都要换成你自己的值。
+> **§8 安全姿态**。当文档读没问题，**照抄运行不行** —— 每条命令里的占位符都要换成你自己的值。
 
 ---
 
@@ -35,13 +35,13 @@ DSH 是一个 agent 运行时（`dsh web` 会起一个 Web GUI），它默认只
 
 ```
 dsh-remote-access\
-├── plugins\            4 个宿主插件（见 §5），每个包自带一页 README
+├── plugins\            4 个宿主插件（见 §6），每个包自带一页 README
 ├── app\DSHPad\         Android WebView 壳（1.2）：把 DSH GUI 装进口袋
 ├── gateway\lan-gateway\ 可选入口：https://dsh.home.arpa（反代 + mDNS + 自签 CA）
 ├── config\             profile 补丁分片 + 一键安装 / 卸载脚本
 ├── tools\              带报告的原地重启，校验插件行真的组合进了新树
 ├── docs\               01 局域网审计 · 02 插件地图 · 03 profile 快照（对照用）
-└── third-party-audit\  5 个第三方局域网插件的 tarball 与解包源码（逐字保真，见 §10）
+└── third-party-audit\  5 个第三方局域网插件的 tarball 与解包源码（逐字保真，见 §11）
 ```
 
 ---
@@ -78,7 +78,38 @@ dsh web --patch config\fragments\01-lan-access.patch.yml --dump-config
 
 ---
 
-## 4. 术语表
+## 4. 只用浏览器：什么都不装
+
+远端设备**不需要安装任何东西** —— 系统自带的浏览器就够了。这是本仓库的主路径：宿主机侧把 §6 那 4 个插件装好之后，任何能访问到它的设备都能直接用。
+
+前提：远端设备与宿主机在同一个局域网，或同一个 tailnet 里（明文 HTTP 的提醒见 §8）。
+
+1. **拿网址** —— 宿主机上 `dsh web` 启动时打印的那一行，或者 `$DSH_HOME/web-urls.txt`（`dsh-lan-url` 逐接口写进去的，一行一条）。
+2. **在远端设备上打开整条网址**。`GET /?token=…` 会让服务端下发一个签名 Cookie，然后 303 跳到干净的 `/`。
+3. **之后只用地址**：`http://<宿主机地址>:3080/`。Cookie 是 `HttpOnly` + `SameSite=Strict` + `Max-Age` 30 天（由 profile 里的 `cookieMaxAgeDays` 决定），**只有 `dsh web` 重启才会失效**；失效后重做第 2 步。
+
+| 纯浏览器可以做 | 纯浏览器做不到 |
+|---|---|
+| 完整 GUI：会话、工具调用与审批、文件 / 图片上传（`<input type="file">` 在浏览器里是原生能力，不需要客户端配合） | **系统通知与后台保活**：标签页一关就没有提醒。要"会话在等你时提醒"，得装 Android 壳 [`app/DSHPad`](app/DSHPad/README.md) |
+| 手机 / 平板视口下可用的布局（`dsh-mobile-ui` 修的就是这一段） | 免粘贴 token 的冷启动：token 每次 `dsh web` 重启都会换 |
+| 加到主屏幕当全屏应用用：服务端会发 `manifest.webmanifest`，其中 `display: "fullscreen"`、`start_url: "/"`、`short_name: "DSH"` | 明文 HTTP 下的"真安装"：Android Chrome 在非安全上下文里一般只给一个快捷方式；要 HTTPS（[`gateway/lan-gateway`](gateway/lan-gateway/README.md)）才会给 WebAPK |
+
+**实测**（对着宿主机的活实例，用它的非 loopback 地址当"远端设备"；headless Edge + CDP 模拟 412×915 / DPR 2 的手机视口）：
+
+| 检查 | 观察到的结果 |
+|---|---|
+| `GET /?token=…` | `303 SeeOther` → `Location: /`；`Set-Cookie: …; Max-Age=2592000; Path=/; HttpOnly; SameSite=Strict` |
+| 带 Cookie 取页面 | `200`，29 KB。HTML 里**没有任何 loopback 绝对引用**（`127.0.0.1` / `localhost` 命中 0）—— 这是远端浏览器能用的前提 |
+| 页面引用的每一个资源 | 逐个 `200`：入口 JS 543 KB、vendor JS 723 KB、两个 CSS、favicon、manifest，以及 10.9 MB 的 `/plugins/??…` 插件包 |
+| `/api` 的 Host 栅栏 | 用真实 Host 取 `/api` 不是 `403`（栅栏放行）；伪造 `Host: evil.example.com` 被挡 |
+| 真实渲染（412×915） | 标题 `DeepSeek Harness`；应用 shell 挂载 **19 个具名 slot**（`sidebar`、`main.conversation`、`conversation.composer`、`conversation.input.attachments` …），输入框与发送键都在 |
+| 同视口下的设置面板 | 对话框实测 `412×915 @ (0,0)`、`position: fixed`、`border-radius: 0`；分区列表变成 `412×102` 的横向标签条、内容区 `412×813`；**纵向溢出 0**（`dsh-mobile-ui` 生效） |
+| 设备归属 | 这些请求都进了 `$DSH_HOME/api-calls.log`，`host=` 是远端设备连的那个地址（`dsh-api-attribution` 生效） |
+
+**没验证的**：真实手机浏览器（Android Chrome / iOS Safari）以及各平台"加到主屏幕"的实际行为 —— 上面是 headless Edge 的模拟视口，不是真机。
+
+---
+## 5. 术语表
 
 | 词 | 在这里的含义 |
 |---|---|
@@ -91,11 +122,11 @@ dsh web --patch config\fragments\01-lan-access.patch.yml --dump-config
 | **分片（fragment）** | `config/fragments/*.patch.yml`，可以直接追加进 profile 补丁的条目 |
 | **联接（junction）** | Windows 目录联接：让 `C:\dsh-plugins\<name>` 指回本仓库里的源码，真身只有一份 |
 | **tailnet / MagicDNS** | Tailscale 的私有网络与域名解析 |
-| **占位符** | `<user>`、`<host-tailnet-ip>` 这类被替换掉的个人基础设施坐标，见 §7 |
+| **占位符** | `<user>`、`<host-tailnet-ip>` 这类被替换掉的个人基础设施坐标，见 §8 |
 
 ---
 
-## 5. 它是怎么做到的：profile 补丁 + 4 个宿主插件
+## 6. 它是怎么做到的：profile 补丁 + 4 个宿主插件
 
 `dsh web` 默认绑 loopback。要让别的设备连上，需要同时处理"能连上"和"连上之后不出问题"两件事，
 所以是「profile 补丁 + 4 个宿主插件」的组合：
@@ -119,7 +150,7 @@ Tailscale 的 `100.x` 网卡起得晚就会被 403 拒掉。
 
 ---
 
-## 6. 安装 / 卸载
+## 7. 安装 / 卸载
 
 ```powershell
 # 只看计划（默认 dry-run，不写任何东西）
@@ -143,7 +174,7 @@ pwsh -File config\uninstall.ps1 -Apply
 
 ---
 
-## 7. 安全姿态（照字面理解）
+## 8. 安全姿态（照字面理解）
 
 - **拿到那条带 token 的 URL = 拿到这台机器的完整控制权。** DSH 以 danger-full-access 运行、
   会话审批提示常被禁用，agent 能直接跑 `pwsh`；明文 HTTP 下 token 与 cookie 在局域网里可被嗅探。
@@ -183,11 +214,11 @@ pwsh -File config\uninstall.ps1 -Apply
 
   这三类位置本仓已全部修正。`app/DSHPad/web/DSHPad.apk` 也是**从这份脱敏源码构建**的
   （不是把原始构建拷进来）：二进制里能搜到 `host-tailnet-ip`（明文 UTF-8），却搜不到任何真实
-  Tailscale 地址、tailnet 名、用户名或主机名 —— 也搜不到已经从仓库移出的那套通知实现。检查方法见 §9。
+  Tailscale 地址、tailnet 名、用户名或主机名 —— 也搜不到已经从仓库移出的那套通知实现。检查方法见 §9 验证状态。
 
 ---
 
-## 8. 验证状态
+## 9. 验证状态
 
 跑过的和**没跑**的分开说 —— 这是本仓库的一贯写法，`docs/` 里也照此。
 
@@ -205,6 +236,7 @@ pwsh -File config\uninstall.ps1 -Apply
 | 局域网端到端 | 远端设备打开 GUI、发消息、拿回结果；证据与量测见 `docs/01` |
 | Tailscale 实测 | 走 tailnet IP 访问可用（`trustedHosts` 重推那条补丁就是为它写的），见 `docs/01` |
 | 手机端布局 | 412×915 前后几何对照，见 `docs/01` §10 |
+| 纯浏览器路径（非 loopback 地址 + 手机视口） | token 交换 → Cookie → 页面与全部资源 200 → 412×915 下 shell 挂载 19 个具名 slot、设置面板满屏、纵向 0 溢出；逐项数值见 §4 |
 
 ### 未验证
 
@@ -216,7 +248,7 @@ pwsh -File config\uninstall.ps1 -Apply
 
 ---
 
-## 9. 文档索引
+## 10. 文档索引
 
 | 文件 | 内容 | 谁该读 |
 |---|---|---|
@@ -230,7 +262,7 @@ pwsh -File config\uninstall.ps1 -Apply
 
 ---
 
-## 10. 许可
+## 11. 许可
 
 **MIT**，见 [`LICENSE`](LICENSE)。覆盖本仓库自己写的代码（`plugins/`、`app/`、`gateway/`、`tools/`、`config/`、`docs/`）。
 
