@@ -1,0 +1,34 @@
+{
+  "name": "dsh-lan-access",
+  "version": "0.1.3",
+  "description": "DSH plugin: bind the Web GUI to 0.0.0.0 for LAN access and polyfill crypto.randomUUID for non-secure (LAN HTTP) contexts. Trusted networks only.",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "deepseek-harness",
+    "deepseek-harness-plugin",
+    "lan",
+    "局域网",
+    "remote-access",
+    "randomuuid"
+  ],
+  "author": "Leon0555",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Leon0555/dsh-lan-access.git"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

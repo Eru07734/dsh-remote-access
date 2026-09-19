@@ -1,0 +1,42 @@
+# Bundle patch: mount the plugin row, take over the webserver bind host, and
+# widen the /api browser-trust fence to every non-loopback IPv4 the host has.
+#
+# 1) The CLI rejects `--host 0.0.0.0` for safety on newer harness versions,
+#    but the webserver schema still accepts the value, so this layer sets the
+#    bind host directly in the composed config — the plugin is self-contained:
+#    no source changes and no `--host` flag needed. The CLI `--port` flag still
+#    works through the `webStartup` expression.
+#
+# 2) `resolveLanTrust` only auto-trusts LAN IPs while the server binds
+#    0.0.0.0 *at startup*, and it snapshots the interfaces exactly once at
+#    boot — so a Tailscale / VPN interface that comes up later, or a
+#    non-0.0.0.0 bind, still leaves every `/api` call 403 from those IPs.
+#    This override re-derives the fence list on the `connection` row from all
+#    current non-internal IPv4 addresses (LAN, Tailscale 100.x, VPN) and
+#    merges in whatever `webRuntime` already computed, so after a restart with
+#    the remote interface up, `http://<lan-ip>:3080` and
+#    `http://<tailscale-ip>:3080` work with zero extra config.
+#
+#    NOTES:
+#    - The expression is a single YAML scalar, so it must stay on one line
+#      (quoted); `process.getBuiltinModule` is available on Node 22.3+.
+#    - Loader `<expr> is evaluated inside `with (ctx)`, which can shadow plain
+#      globals (a ctx field named `Object` etc. breaks a bare `Object`), so
+#      every global the expression touches goes through `globalThis`.
+#
+# Remove this bundle (or just the blocks below) to restore stock behavior.
+- id: webserver
+  config:
+    host: '0.0.0.0'
+    port: !!js ctx.webStartup.port ?? 3080
+    compression: gzip
+    compressionLevel: 1
+    compressionThresholdBytes: 1024
+
+- id: connection
+  config:
+    trustedHosts: !!js '[...(ctx.webRuntime?.trustedHosts ?? []), ...(() => { const os = globalThis.process?.getBuiltinModule?.("os"); return os ? globalThis.Object.values(os.networkInterfaces()).flat().filter(i => i && i.family === "IPv4" && !i.internal).map(i => i.address) : []; })()]'
+
+- insert:
+    - id: lan-access
+      name: 'dsh-web-lan-access'

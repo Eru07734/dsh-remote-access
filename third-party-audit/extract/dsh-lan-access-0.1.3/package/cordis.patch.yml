@@ -1,0 +1,19 @@
+# dsh-lan-access bundle patch — applied after the web-app layer, before the
+# user's own cordis.patch.yml. Two jobs:
+#   1) bind the Web GUI to all interfaces (LAN access, trusted networks only)
+#   2) mount this plugin's code row, which injects a crypto.randomUUID
+#      polyfill into the served index.html (see lib/index.js).
+
+# 1) LAN binding: override the web-app bundle's webserver row. A patch
+# replaces the row's whole config, so every key it owns is restated.
+- id: webserver
+  config:
+    host: 0.0.0.0
+    port: !!js ctx.webStartup.port ?? 3080
+
+# 2) Mount the code row. `inject: [webServer]` waits for the webserver
+# service so apply() can register an index tap.
+- insert:
+    - id: lan-access
+      name: 'dsh-lan-access'
+      inject: [webServer]

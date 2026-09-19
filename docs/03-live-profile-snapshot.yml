@@ -1,0 +1,139 @@
+# ── 这是什么（不是配置输入）──────────────────────────────────────────────────
+# 取自一台真实机器上 ~/.dsh/profiles/web/cordis.patch.yml，供对照用：
+# config\install.ps1 / config\uninstall.ps1 都不读它，它也不是任何步骤的输入。
+# 「两台机器的 DSH 互通」（dsh-net-bridge）的条目已从这里移除 —— 那部分现在在
+# https://github.com/Eru07734/dsh-net-bridge
+
+# Your patch layer for this dsh profile, applied after every bundle layer:
+# a top-level YAML array of loader patch entries (id-targeted config
+# overrides, disables, and insert lists; `!!js` expressions allowed).
+
+# ── LAN access ──────────────────────────────────────────────────────────────
+# Bind the Web GUI to all interfaces so devices on the same LAN can use it.
+# `dsh web --host 0.0.0.0` is refused on purpose (dsh-web-app/lib/startup.js
+# rejects it as "would expose remote code execution to the network"), but the
+# webserver schema accepts the value and this patch layer is the supported
+# seam. A patch replaces the targeted row's WHOLE config, so every key the
+# web-app bundle set is restated here: dropping the compression* keys would
+# silently fall back to the schema default `none` and turn gzip off.
+#
+# Binding 0.0.0.0 is also what makes the /api browser-trust fence usable from
+# the LAN at all: dsh-web-app derives `trustedHosts` from every non-internal
+# IPv4 address when — and only when — the active bind is 0.0.0.0.
+#
+# Remove both entries below to restore loopback-only behavior.
+- id: webserver
+  config:
+    host: '0.0.0.0'
+    port: !!js ctx.webStartup.port ?? 3080
+    compression: gzip
+    compressionLevel: 1
+    compressionThresholdBytes: 1024
+
+# One local plugin row, our own code at C:/dsh-plugins/dsh-lan-owns-host (no
+# third-party package). It sets __DSH_TRANSPORT__.ownsHost so a page opened
+# over a LAN address keeps host-backed settings persistence instead of
+# degrading to memory-only. Delete this insert to get stock behavior back.
+- insert:
+    - id: lan-owns-host
+      name: 'C:/dsh-plugins/dsh-lan-owns-host/index.js'
+
+# Second local row, our own code at C:/dsh-plugins/dsh-lan-url. `dsh web` prints
+# the token-bearing URL once, to its own stdout; this asks the live connection
+# service for the same URL (the public ctx.connection.authenticatedUrl call that
+# dsh-web-app itself uses) and writes one line per interface to
+# $DSH_HOME/web-urls.txt. That file contains live credentials: delete it when
+# unused, and delete this insert to stop writing it.
+- insert:
+    - id: lan-url
+      name: 'C:/dsh-plugins/dsh-lan-url/index.js'
+
+# Third local row, our own code at C:/dsh-plugins/dsh-api-attribution. Nothing in
+# the harness attributes a message to the device it came from, so this attaches
+# one listener to the live HTTP server (the public ctx.webServer.server object —
+# no first-party code is patched) and appends a line per `/api*` request and per
+# `GET /` to $DSH_HOME/api-calls.log: timestamp, method/path, the authority the
+# device connected to, and its User-Agent. Assets are skipped so a page load
+# does not bury the signal. Monitoring: every device is recorded; delete the log
+# or this insert to stop.
+- insert:
+    - id: api-attribution
+      name: 'C:/dsh-plugins/dsh-api-attribution/index.js'
+
+# ── /api trust fence: accept the Tailscale (and any later) addresses ─────────
+# dsh-web-app derives `trustedHosts` ONCE at boot, from the interfaces that are
+# up at that moment, and only when the bind is 0.0.0.0. Tailscale's 100.x
+# address came up later, so every /api request whose Host is the tailnet IP is
+# answered 403 and the GUI looks broken from the phone.
+#
+# This restates the Connection row's whole config (a patch replaces it) with:
+#   - whatever webRuntime already computed (the boot-time LAN literals),
+#   - the tailnet MagicDNS name, so a phone using MagicDNS is accepted too,
+#   - every non-internal IPv4 the machine has RIGHT NOW, re-derived at each
+#     compose/boot, which is what picks up Tailscale (100.x) and VPN adapters.
+# The expression is a single-quoted YAML scalar because Loader evaluates `!!js`
+# inside `with (ctx)`, where bare globals can be shadowed — hence `globalThis`.
+- id: connection
+  config:
+    trustedHosts: !!js '[...(ctx.webRuntime?.trustedHosts ?? []), "admin.<tailnet>.ts.net", ...(() => { const os = globalThis.process?.getBuiltinModule?.("os"); return os ? globalThis.Object.values(os.networkInterfaces()).flat().filter(i => i && i.family === "IPv4" && !i.internal).map(i => i.address) : []; })()]'
+
+# ── Narrow-viewport stylesheet for the Settings dialog ──────────────────────
+# The dialog ships as a fixed desktop two-pane layout: measured at 412x915 it is
+# a 364x800 box whose 188px nav leaves only 176px for the options pane, so every
+# label wraps to one character per line and 32 elements overflow the bottom.
+# This row (source: C:/dsh-plugins/dsh-mobile-ui) injects one <style> into the
+# served index, scoped to max-width: 820px, turning the panel into a full-screen
+# column with a horizontal tab strip. Delete this insert to restore stock.
+- insert:
+    - id: mobile-ui
+      name: 'C:/dsh-plugins/dsh-mobile-ui/index.js'
+
+# ── DSH → DSH: the Ubuntu guest's own DSH as an out-of-process ACP subagent ───
+# The guest keeps its own DSH home (`~/.dsh`, a normal 0.1.5-rc.2 install with the
+# same model catalog and credentials as this host) and its own `~/.dsh/profiles/acp`.
+# The host spawns `ssh` and hands the Agent Client Protocol back and forth over
+# that stdio — agent to agent, with nothing but stdio anywhere in the path.
+#
+# `cwd` is the one cross-platform constraint. The provider uses the configured
+# value BOTH as the local spawn cwd and as the ACP `session/new` workspace, passed
+# through verbatim, and dsh-acp requires an absolute path — `D:\...` is not
+# absolute on Linux. `/home/user` is that user's home in the guest, and on this
+# host the same string resolves drive-relatively to `<drive>:\home\user`; those
+# empty directories exist only so the local spawn has a cwd it can enter (they are
+# not used for anything else, and removing them breaks the tool).
+#
+# Everything after the host argument is joined by ssh into one remote command for
+# the guest's shell. The PATH prefix is required: a non-interactive SSH session
+# does not have the guest's `~/.hermes/node/bin` on PATH, where node and dsh live.
+- insert:
+    - id: subagent-acp
+      name: '@deepseek-ai/dsh-subagent-acp'
+      config:
+        providerName: acp
+        command: ssh
+        args:
+          - '-o'
+          - BatchMode=yes
+          - '-o'
+          - StrictHostKeyChecking=accept-new
+          - '-o'
+          - ConnectTimeout=10
+          - user@192.168.126.132
+          - PATH=/home/user/.hermes/node/bin:$PATH
+          - /home/user/.hermes/node/bin/dsh
+          - --profile
+          - acp
+        cwd: /home/user
+        permission: allow
+
+# The model-facing half: one tool named `subagent_acp` that delegates to the
+# provider above. `one-shot` matches the other out-of-process backends (codex,
+# claude-code) — the ACP provider advertises no continuable children.
+- insert:
+    - id: tool-subagent-acp
+      name: '@deepseek-ai/dsh-tool-subagent'
+      config:
+        provider: acp
+        toolName: subagent_acp
+        backgroundMode: one-shot
+        maxDepth: provider-managed

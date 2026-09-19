@@ -1,0 +1,52 @@
+{
+  "name": "dsh-public-access",
+  "version": "1.3.0",
+  "description": "DeepSeek Harness plugin - public/LAN access (0.0.0.0 + trusted hosts) with login auth, adapted to dsh 0.1.x browser-token auth",
+  "type": "module",
+  "main": "src/reverse-proxy-fix.js",
+  "exports": {
+    ".": "./src/reverse-proxy-fix.js",
+    "./web-startup": "./src/web-startup.js"
+  },
+  "files": [
+    "src/",
+    "cordis.patch.yml",
+    "start.sh",
+    "README.md"
+  ],
+  "keywords": [
+    "deepseek",
+    "harness",
+    "dsh",
+    "reverse-proxy",
+    "nginx",
+    "auth",
+    "public-access",
+    "web-ui",
+    "authentication",
+    "proxy",
+    "remote-access"
+  ],
+  "author": "JNan-QQ",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://gitee.com/jn-qq/dsh-public-access.git"
+  },
+  "scripts": {
+    "start": "./start.sh",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "homepage": "https://gitee.com/jn-qq/dsh-public-access",
+  "bugs": {
+    "url": "https://gitee.com/jn-qq/dsh-public-access/issues"
+  },
+  "dependencies": {
+    "commander": "^15.0.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

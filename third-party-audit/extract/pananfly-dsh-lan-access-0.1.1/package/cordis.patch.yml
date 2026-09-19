@@ -1,0 +1,28 @@
+# dsh-lan-access patch layer: webServer on 127.0.0.1 | 0.0.0.0 | :: | custom IP with BrowserAuth token + optional isLoopback patch
+# Applied after bundles in dsh.profile.bundles order
+# Directory picker is handled adaptively by official @deepseek-ai/dsh-host-directory-picker-auto
+
+# Disable official rows
+- id: web-startup
+  disabled: true
+- id: webserver
+  disabled: true
+
+# Insert our replacements
+- insert:
+    - id: web-lan-startup
+      name: "@pananfly/dsh-lan-access/startup"
+    - id: web-lan-webserver
+      name: "@pananfly/dsh-lan-access/webserver"
+      inject: [webStartup]
+      config:
+        host: !!js ctx.webStartup.host ?? "127.0.0.1"
+        port: !!js ctx.webStartup.port ?? 3080
+
+# Configure Host fence with full LAN literals provided by webStartup
+- id: connection
+  inject: [webStartup]
+  config:
+    trustedHosts: !!js ctx.webStartup.trustedHosts
+    cookieMaxAgeDays: 30
+    maxRequestBodyBytes: 314572800

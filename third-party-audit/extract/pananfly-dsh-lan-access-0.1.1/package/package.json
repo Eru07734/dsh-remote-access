@@ -1,0 +1,73 @@
+{
+  "name": "@pananfly/dsh-lan-access",
+  "version": "0.1.1",
+  "description": "Helper for dsh web LAN access: 127.0.0.1|0.0.0.0|::|custom IP webServer with BrowserAuth token, optional isLoopback patch",
+  "type": "module",
+  "main": "dist/host/index.js",
+  "types": "dist/host/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/host/index.d.ts",
+      "default": "./dist/host/index.js"
+    },
+    "./startup": {
+      "types": "./dist/host/startup.d.ts",
+      "default": "./dist/host/startup.js"
+    },
+    "./webserver": {
+      "types": "./dist/host/webserver.d.ts",
+      "default": "./dist/host/webserver.js"
+    },
+    "./package.json": "./package.json",
+    "./cordis.patch.yml": "./cordis.patch.yml"
+  },
+  "files": [
+    "dist/**",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh.md"
+  ],
+  "license": "MIT",
+  "author": "pananfly",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pananfly/dsh-lan-access.git"
+  },
+  "homepage": "https://github.com/pananfly/dsh-lan-access#readme",
+  "bugs": {
+    "url": "https://github.com/pananfly/dsh-lan-access/issues"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "lan",
+    "auth",
+    "cordis",
+    "access"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@deepseek-ai/dsh-cmdline": "0.0.1-rc.1",
+    "@deepseek-ai/schemastery": "^3.18.1",
+    "commander": "^15.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsdown": "^0.14.0",
+    "typescript": "^5.7.0"
+  },
+  "scripts": {
+    "build": "tsdown && tsc --emitDeclarationOnly",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit"
+  }
+}

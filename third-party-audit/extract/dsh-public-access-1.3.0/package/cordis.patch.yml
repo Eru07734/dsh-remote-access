@@ -1,0 +1,12 @@
+# Replace the stock web-startup row so this bundle can explicitly opt in to
+# all-interface binding. The rest of the web app still derives LAN trustedHosts
+# through its official webRuntime -> connection path.
+- id: web-startup
+  disabled: true
+
+- insert:
+    - id: public-access-web-startup
+      name: 'dsh-public-access/web-startup'
+
+    - id: public-access-reverse-proxy
+      name: 'dsh-public-access'

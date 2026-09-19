@@ -1,0 +1,11 @@
+- id: webserver
+  config:
+    host: '0.0.0.0'
+    port: !!js ctx.webStartup.port ?? 3080
+    compression: gzip
+    compressionLevel: 1
+    compressionThresholdBytes: 1024
+
+- insert:
+    - id: lan-owns-host
+      name: 'C:/dsh-plugins/dsh-lan-owns-host/index.js'
