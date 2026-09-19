@@ -1,0 +1,45 @@
+# ── live credentials: never commit these ────────────────────────────────────
+# The launch token URL, the net-bridge pre-shared key, the device-attribution
+# log, and every private key. See README.md §5 for what each one is.
+web-urls.txt
+.net-bridge-token
+api-calls.log
+*.key
+*.pem
+*.pfx
+*.p12
+
+# ── plugin / runtime state ──────────────────────────────────────────────────
+node_modules/
+*.log
+*.out
+logs/
+__pycache__/
+*.pyc
+
+# ── Android / Gradle build output ───────────────────────────────────────────
+build/
+.gradle/
+*.apk.tmp
+*.ap_
+*.dex
+# Per-machine SDK location. Tracked until now, which leaked an absolute user
+# path; recreate it per machine with: sdk.dir=<your Android SDK path>
+local.properties
+local.properties.bak
+
+# ── generated artefacts from the self-checks ────────────────────────────────
+# Keep them out if the self-checks are re-run inside the kit.
+selfcheck-out/
+capture-*.png
+probe*.png
+vm-*.png
+*-screen*.png
+
+# ── editors / OS ────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store

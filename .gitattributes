@@ -1,0 +1,30 @@
+# Line endings.
+#
+# This machine has core.autocrlf=true globally, which would rewrite every LF as
+# CRLF the first time Git touches a file. Several files here are compared by
+# hash against their source of truth (see README.md §3), so pin LF for text and
+# let the working tree stay byte-identical.
+* text=auto eol=lf
+
+# Binary — never diff or normalise.
+*.apk    binary
+*.tgz    binary
+*.cer    binary
+*.crt    binary
+*.key    binary
+*.png    binary
+*.jpg    binary
+*.jpeg   binary
+*.exe    binary
+*.zip    binary
+*.bundle binary
+
+# PowerShell and shell helpers keep LF; CRLF would still work but the diffs and
+# the hash comparison above are cleaner without a conversion.
+*.ps1 text eol=lf
+*.sh  text eol=lf
+*.mjs text eol=lf
+*.js  text eol=lf
+*.py  text eol=lf
+*.yml text eol=lf
+*.md  text eol=lf
