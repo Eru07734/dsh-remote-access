@@ -1,0 +1,34 @@
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'ai.deepseek.dshpad'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "ai.deepseek.dshpad"
+        minSdk 24
+        targetSdk 34
+        versionCode 3
+        versionName "1.2"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    lint {
+        abortOnError false
+        checkReleaseBuilds false
+    }
+}

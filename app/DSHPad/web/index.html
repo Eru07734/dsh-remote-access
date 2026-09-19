@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>App 下载</title>
+<style>
+  :root { color-scheme: light dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 24px 18px 48px;
+    font: 16px/1.65 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    background: #f6f7f9;
+    color: #1a1a1e;
+  }
+  main { max-width: 620px; margin: 0 auto; }
+  h1 { font-size: 30px; margin: 0 0 4px; letter-spacing: -.02em; }
+  .sub { margin: 0 0 26px; color: #6b6b76; }
+  .card {
+    background: #fff; border: 1px solid #e6e7eb; border-radius: 16px;
+    padding: 22px; margin-bottom: 18px;
+  }
+  .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+  .head h2 { font-size: 21px; margin: 0; letter-spacing: -.01em; }
+  .tag {
+    font-size: 12.5px; color: #6b6b76; background: #eef0f4;
+    padding: 2px 9px; border-radius: 999px;
+  }
+  .desc { margin: 0 0 18px; color: #55555f; font-size: 15px; }
+  .btn {
+    display: block; text-align: center; text-decoration: none;
+    background: #4f46e5; color: #fff; font-weight: 600; font-size: 17px;
+    padding: 15px 20px; border-radius: 12px; transition: background .15s;
+  }
+  .btn:active { background: #4338ca; }
+  h3 { font-size: 16px; margin: 0 0 10px; }
+  ol, ul { margin: 0; padding-left: 22px; }
+  li { margin-bottom: 7px; }
+  code {
+    background: #eef0f4; padding: 2px 6px; border-radius: 5px;
+    font: 13px/1.5 ui-monospace, Consolas, monospace; word-break: break-all;
+  }
+  .warn {
+    background: #fff8e6; border: 1px solid #f2dfae; border-radius: 12px;
+    padding: 14px 18px; font-size: 14.5px;
+  }
+  .warn strong { color: #8a6100; }
+  @media (prefers-color-scheme: dark) {
+    body { background: #131316; color: #e9e9ee; }
+    .card { background: #1c1c21; border-color: #2c2c33; }
+    .sub { color: #9a9aa6; }
+    .desc { color: #a8a8b4; }
+    .tag { background: #26262d; color: #9a9aa6; }
+    code { background: #26262d; }
+    .warn { background: #2a220f; border-color: #4a3c14; }
+    .warn strong { color: #e0b34a; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <h1>App 下载</h1>
+  <p class="sub">内网 / Tailscale 分发 · 点按钮直接下载</p>
+
+  <article class="card">
+    <div class="head">
+      <h2>DSH Pad</h2>
+      <span class="tag">1.2 · 19 KB · Android 7+</span>
+    </div>
+    <p class="desc">DeepSeek Harness 的 Android 客户端，通过 Tailscale 直连电脑上的 DSH Web GUI。
+    粘贴一次带 token 的网址即可连上；支持文件 / 图片上传。</p>
+    <a class="btn" href="DSHPad.apk" download>下载 DSH Pad 1.2</a>
+  </article>
+
+  <div class="card">
+    <h3>版本</h3>
+    <ul>
+      <li><b>DSH Pad 1.2</b> — 本仓库现在分发的版本：WebView 壳 + token 换取 + 文件 / 图片上传。
+          1.1 曾在这套壳上加过「会话在等你」与「任务完成 / 出错」两类系统通知；那部分与本仓库
+          「从别的设备访问 / 操作 DSH」的主题无关，已整块移出，因此 1.2 不再包含通知。</li>
+      <li><b>DSH Pad 1.0</b> — 首个版本：WebView 壳 + 文件 / 图片上传。</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h3>安装</h3>
+    <ol>
+      <li>点上面的按钮下载 APK</li>
+      <li>在通知栏或「文件管理 → 下载」里点它开始安装</li>
+      <li>若提示「禁止安装未知应用」，允许浏览器的安装权限后再试</li>
+    </ol>
+  </div>
+
+  <div class="card warn">
+    <strong>小米 / 红米设备注意：</strong>如果安装被系统拦下，需要先打开
+    「设置 → 开发者选项 → USB 安装」。开启后安装会正常进行。
+  </div>
+
+  <div class="card">
+    <h3>DSH Pad 首次连接</h3>
+    <p style="margin:0 0 10px">若 App 停在「连接设置」，说明内置 token 已过期（DSH 每次重启都会换）。
+    在电脑上运行 <code>DSHPad\get-dsh-token.ps1</code>，把输出的整条网址粘进 Token 栏即可。
+    服务器地址保持 <code>&lt;host-tailnet-ip&gt;:3080</code>。</p>
+  </div>
+
+</main>
+</body>
+</html>

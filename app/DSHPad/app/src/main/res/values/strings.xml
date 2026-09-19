@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DSH Pad</string>
+    <string name="settings_title">连接设置</string>
+
+    <string name="settings_intro">把电脑上 `dsh web` 启动时打印的那条带 token 的网址整条粘贴到下面「Token / 网址」里即可（形如 http://127.0.0.1:3080/?token=xxxx）。\n\n会自动提取其中的 token；若「服务器地址」留空，则同时采用网址里的地址。</string>
+
+    <string name="label_server">服务器地址</string>
+    <string name="hint_server">&lt;host-tailnet-ip&gt;:3080</string>
+
+    <string name="label_token">Token / 网址</string>
+    <string name="hint_token">粘贴 dsh web 打印的完整网址，或直接填 token</string>
+
+    <string name="save">保存并连接</string>
+    <string name="reset">恢复默认</string>
+    <string name="saved">已保存</string>
+    <string name="token_required">请先粘贴 token 或带 token 的网址</string>
+
+    <string name="auth_failed">认证失败 (401)：token 已失效或服务器已重启。点此重新粘贴 dsh web 打印的网址。</string>
+
+    <string name="action_settings">连接设置</string>
+    <string name="action_reload">重新加载</string>
+    <string name="no_file_picker">这台设备没有可用的文件选择器</string>
+</resources>

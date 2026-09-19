@@ -1,0 +1,11 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Resolved from the local Gradle module cache; the plugin-marker form
+        // (com.android.application:...gradle.plugin) is not present offline.
+        classpath 'com.android.tools.build:gradle:8.13.0'
+    }
+}
